@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temp Data</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+        }
+        .card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .card img {
+            width: 128px; /* Increased width */
+            height: 128px; /* Increased height */
+            margin-bottom: 10px;
+        }
+        .card h2 {
+            font-size: 1.5em;
+            margin: 0;
+        }
+        #chart-container {
+            width: 100%;
+            max-width: 600px;
+            height: 400px; /* Added height for the container */
+        }
+        @media (min-width: 768px) {
+            body {
+                flex-direction: row;
+                justify-content: space-around;
+            }
+            .card {
+                width: 200px;
+                margin-bottom: 0;
+            }
+            #chart-container {
+                flex: 1;
+                max-width: 70%;
+                height: 500px; /* Increased height for larger screens */
+            }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        async function fetchTempData() {
+            const response = await fetch('https://api.thingspeak.com/channels/2391862/feeds.json?results=20');
+            const data = await response.json();
+            return data.feeds.map(feed => ({
+                time: new Date(feed.created_at).toLocaleString(),
+                temp: parseFloat(feed.field1)
+            }));
+        }
+
+        async function createChart() {
+            const tempData = await fetchTempData();
+            const ctx = document.getElementById('tempChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: tempData.map(d => d.time),
+                    datasets: [{
+                        label: 'Temp',
+                        data: tempData.map(d => d.temp),
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        fill: false,
+                        tension: 0.1
+                    }]
+                },
+                options: {
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Temp'
+                            }
+                        }
+                    },
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        window.onload = createChart;
+    </script>
+</head>
+<body>
+    <div class="card">
+        <img src="assets/temp.png" alt="Temp">
+        <h2>Temp</h2>
+    </div>
+    <div id="chart-container">
+        <canvas id="tempChart" width="600" height="400"></canvas> 
+    </div>
+</body>
+</html>
